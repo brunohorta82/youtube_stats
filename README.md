@@ -1,6 +1,6 @@
 # YOUTUBE STATS
 
-# arduino-youtube-api
+# Biblioteca arduino-youtube-api
 https://github.com/witnessmenow/arduino-youtube-api
 
 ## Necessitam de uma Google Apps API key 
