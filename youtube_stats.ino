@@ -1,71 +1,54 @@
+//7 SEGMENT LED DISPLAY
+#include "TM1637.h"
+//YOUTUBE API
 #include <YoutubeApi.h>
+//ESP
 #include <ESP8266WiFi.h>
-#include <WiFiClientSecure.h>
+//Wi-Fi Manger library
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>//https://github.com/tzapu/WiFiManager
 
-#include <ArduinoJson.h> // This Sketch doesn't technically need this, but the library does so it must be installed.
-//
-//------- Replace the following! ------
-char ssid[] = "SSID";       // your network SSID (name)
-char password[] = "PW";  // your network key
-#define API_KEY "API_KEY"  // your google apps API Token
-#define CHANNEL_ID "CHANEL_ID" // makes up the url of channel
+//YOUTUBE CONSTANTS
+#define API_KEY "APIKEY"  // My Google apps API Token
+#define CHANNEL_ID "CHANNEL_ID" //URL CHANNEL ID
 
+//7 SEGMENT PIN CONSTANTS
+#define CLK D4
+#define DIO D5
 
 WiFiClientSecure client;
 YoutubeApi api(API_KEY, client);
+TM1637 tm1637(CLK,DIO);
 
-unsigned long api_mtbs = 60000; //mean time between api requests
-unsigned long api_lasttime;   //last time api request has been done
-
-long subs = 0;
+unsigned long api_mtbs = 60000; //intervalo de tempo para cada pedido de stats no youtube
+unsigned long api_lasttime;   //tempo do ultumo pedido
 
 void setup() {
-
+  //SETUP SERIAL Apenas para Debug
   Serial.begin(115200);
-
-  // Set WiFi to station mode and disconnect from an AP if it was Previously
-  // connected
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  delay(100);
-
-  // Attempt to connect to Wifi network:
-  Serial.print("Connecting Wifi: ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(500);
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  IPAddress ip = WiFi.localIP();
-  Serial.println(ip);
-
-
+  WiFiManager wifiManager;
+  wifiManager.autoConnect("MyYoutubeStats");
+  tm1637.init();
+  tm1637.set(BRIGHT_TYPICAL);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
 }
 
 void loop() {
 
   if (millis() - api_lasttime > api_mtbs)  {
-    if(api.getChannelStatistics(CHANNEL_ID))
-    {
-      Serial.println("---------Stats---------");
-      Serial.print("Subscriber Count: ");
-      Serial.println(api.channelStats.subscriberCount);
-      Serial.print("View Count: ");
-      Serial.println(api.channelStats.viewCount);
-      Serial.print("Comment Count: ");
-      Serial.println(api.channelStats.commentCount);
-      Serial.print("Video Count: ");
-      Serial.println(api.channelStats.videoCount);
-      // Probably not needed :)
-      //Serial.print("hiddenSubscriberCount: ");
-      //Serial.println(api.channelStats.hiddenSubscriberCount);
-      Serial.println("------------------------");
-
-    }
+    if(api.getChannelStatistics(CHANNEL_ID)){
+      int subs = api.channelStats.subscriberCount;
+      tm1637.display(0, ((uint8_t) subs / 1000) % 10);
+      tm1637.display(1,((uint8_t) subs / 100) % 10);
+      tm1637.display(2,((uint8_t) subs / 10) % 10);
+      tm1637.display(3,((uint8_t) subs / 1) % 10);
+    }else{
+      tm1637.display(0,0);
+      tm1637.display(1,0);
+      tm1637.display(2,0);
+      tm1637.display(3,0);
+      }
     api_lasttime = millis();
   }
+  
 }
