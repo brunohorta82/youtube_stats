@@ -10,8 +10,8 @@
 #include <WiFiManager.h>//https://github.com/tzapu/WiFiManager
 
 //YOUTUBE CONSTANTS
-#define API_KEY "APIKEY"  // My Google apps API Token
-#define CHANNEL_ID "CHANNEL_ID" //URL CHANNEL ID
+#define API_KEY "AIzaSyCLDE0nNfdyniru85b_F4b2VwQ9sv3yDsQ"  // My Google apps API Token
+#define CHANNEL_ID "UC9I28GfJSS-s6pSZpqMt7IQ" //URL CHANNEL ID
 
 //7 SEGMENT PIN CONSTANTS
 #define CLK D4
@@ -23,7 +23,7 @@ TM1637 tm1637(CLK,DIO);
 
 unsigned long api_mtbs = 60000; //intervalo de tempo para cada pedido de stats no youtube
 unsigned long api_lasttime;   //tempo do ultumo pedido
-
+bool firstPush = true;
 void setup() {
   //SETUP SERIAL Apenas para Debug
   Serial.begin(115200);
@@ -34,9 +34,10 @@ void setup() {
 }
 
 void loop() {
-
-  if (millis() - api_lasttime > api_mtbs)  {
+ 
+  if (millis() - api_lasttime > api_mtbs|| firstPush)  {
     if(api.getChannelStatistics(CHANNEL_ID)){
+      firstPush = false;
       int subs = api.channelStats.subscriberCount;
       tm1637.display(0, ((uint8_t) subs / 1000) % 10);
       tm1637.display(1,((uint8_t) subs / 100) % 10);
